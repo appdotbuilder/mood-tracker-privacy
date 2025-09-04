@@ -1,15 +1,42 @@
+import { db } from '../db';
+import { moodEntriesTable } from '../db/schema';
 import { type MoodEntry, type DateRangeQuery, type UserDataQuery } from '../schema';
+import { eq, and, gte, lte, desc, SQL } from 'drizzle-orm';
 
 export const getMoodEntries = async (query: UserDataQuery): Promise<MoodEntry[]> => {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is fetching all mood entries for a specific user.
-    // This will be used to display the user's mood history and trends.
-    return Promise.resolve([]);
+  try {
+    const results = await db.select()
+      .from(moodEntriesTable)
+      .where(eq(moodEntriesTable.user_id, query.user_id))
+      .orderBy(desc(moodEntriesTable.created_at))
+      .execute();
+
+    return results;
+  } catch (error) {
+    console.error('Failed to get mood entries:', error);
+    throw error;
+  }
 };
 
 export const getMoodEntriesByDateRange = async (query: DateRangeQuery): Promise<MoodEntry[]> => {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is fetching mood entries within a specific date range.
-    // This will be used for generating weekly/monthly graphs and analytics.
-    return Promise.resolve([]);
+  try {
+    const conditions: SQL<unknown>[] = [
+      eq(moodEntriesTable.user_id, query.user_id)
+    ];
+
+    // Add date range conditions
+    conditions.push(gte(moodEntriesTable.created_at, query.start_date));
+    conditions.push(lte(moodEntriesTable.created_at, query.end_date));
+
+    const results = await db.select()
+      .from(moodEntriesTable)
+      .where(and(...conditions))
+      .orderBy(desc(moodEntriesTable.created_at))
+      .execute();
+
+    return results;
+  } catch (error) {
+    console.error('Failed to get mood entries by date range:', error);
+    throw error;
+  }
 };
